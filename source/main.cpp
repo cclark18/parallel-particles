@@ -14,21 +14,24 @@
 #include "glm/gtc/matrix_transform.hpp" //perspective, txrans etc
 #include "glm/gtc/type_ptr.hpp" //value_ptr
 #include <memory>
-//#include ""
 
 #include "Library/TimeManager.h"
 #include "Library/InitObjects.h"
 #include "Library/tiny_obj_loader.h"
 #include "Library/GLSL.h"
 #include "Library/GLError.h"
+#include "Handles.h"
+#include "Mesh.h"
 
 GLFWwindow* window;
 using namespace std;
 using namespace glm;
 int g_width = 1280;
 int g_height = 720;
+vector<tinyobj::shape_t> shapes;
 
-void window_size_callback(GLFWwindow* window, int w, int h){
+void window_size_callback(GLFWwindow* window, int w, int h)
+{
   glViewport(0, 0, (GLsizei)w, (GLsizei)h);
   g_width = w;
   g_height = h;
@@ -42,7 +45,8 @@ void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos)
 {
 }
 
-void initGL() {
+void initGL()
+{
   // Set the background color
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   // Enable Z-buffer test
@@ -65,7 +69,7 @@ int main(int argc, char **argv)
 
   // Open a window and create its OpenGL context
   printf("%d, %d\n", g_width, g_height);
-  window = glfwCreateWindow(g_width, g_height, "Hear No Evil, See No Evil", NULL, NULL);
+  window = glfwCreateWindow(g_width, g_height, "Parallel Particles", NULL, NULL);
   if (window == NULL) {
     fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
     glfwTerminate();

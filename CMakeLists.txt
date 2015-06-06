@@ -47,8 +47,8 @@ foreach(SOURCE ${SOURCES})
    )
 endforeach(SOURCE)
 
-# force C++11 with gcc, use optimization
-SET(CMAKE_CXX_FLAGS "-std=c++0x -std=gnu++0x -O3")
+# use optimization
+SET(CMAKE_CXX_FLAGS "-std=gnu++0x -O3")
 
 SET(CMAKE_BUILD_TYPE Release)
 

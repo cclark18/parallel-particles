@@ -12,6 +12,8 @@ set(HEADERS
 # List all .c / .cpp files here
 set(SOURCES
    main.cpp
+   Handles.cpp
+   Mesh.cpp
 
    Library/GLSL.cpp
    Library/tiny_obj_loader.cc
