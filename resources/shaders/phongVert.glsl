@@ -22,5 +22,4 @@ void main() {
 
   vNormal = normal_fin; // normalized
   vPos = pre_pos;
-  ShadowCoord = uDepthMVP * vec4(aPosition, 1.0);
 }

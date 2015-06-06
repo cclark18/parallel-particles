@@ -15,20 +15,21 @@
 #include "Library/GLSL.h"
 
 class Handles {
-public:
-   GLuint prog;
-   GLuint aPosition;
-   GLuint aNormal;
-   GLuint uLightPos;
-   GLuint uMatAmb;
-   GLuint uMatDif;
-   GLuint uMatSpec;
-   GLuint uMatShine;
-   GLuint uProjMatrix;
-   GLuint uViewMatrix;
-   GLuint uModelMatrix;
-   GLuint uCamPos;
-   bool installShaders(const std::string &vShaderName, const std::string &fShaderName);
+  public:
+    GLuint prog;
+    GLuint aPosition;
+    GLuint aNormal;
+    GLuint uLightPos;
+    GLuint uLightCol;
+    GLuint uMatAmb;
+    GLuint uMatDif;
+    GLuint uMatSpec;
+    GLuint uMatShine;
+    GLuint uProjMatrix;
+    GLuint uViewMatrix;
+    GLuint uModelMatrix;
+    GLuint uCamPos;
+    bool installShaders(const std::string &vShaderName, const std::string &fShaderName);
 };
 
 #endif /* defined(__MarchingCubes__Handles__) */

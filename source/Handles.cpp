@@ -56,6 +56,7 @@ bool Handles::installShaders(const std::string &vShaderName, const std::string &
   this->uViewMatrix = GLSL::getUniformLocation(this->prog, "uViewMatrix");
   this->uModelMatrix = GLSL::getUniformLocation(this->prog, "uModelMatrix");
   this->uLightPos = GLSL::getUniformLocation(this->prog, "uLightPos");
+  this->uLightCol = GLSL::getUniformLocation(this->prog, "uLightCol");
   this->uMatAmb = GLSL::getUniformLocation(this->prog, "UaColor");
   this->uMatDif = GLSL::getUniformLocation(this->prog, "UdColor");
   this->uMatSpec = GLSL::getUniformLocation(this->prog, "UsColor");
