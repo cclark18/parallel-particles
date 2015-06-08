@@ -4,6 +4,7 @@
 //#define DEBUG
 //#define RENDER
 #define VECTOR
+#define PARALLEL
 #define OFFLOAD_BUILD
 
 #endif

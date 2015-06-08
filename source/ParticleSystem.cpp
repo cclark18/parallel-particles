@@ -110,7 +110,9 @@ void ParticleSystem::addMesh(Mesh *mesh)
 
 void ParticleSystem::getSOAPositions(soa_point_t *result)
 {
+#ifdef PARALLEL
 #pragma omp parallel for
+#endif
   for (int i = 0; i < particles.size(); ++i) {
     result->x[i] = particles[i].position.x;
     result->y[i] = particles[i].position.y;
@@ -120,7 +122,9 @@ void ParticleSystem::getSOAPositions(soa_point_t *result)
 
 void ParticleSystem::setSOAPositions(soa_point_t values)
 {
+#ifdef PARALLEL
 #pragma omp parallel for
+#endif
   for (int i = 0; i < particles.size(); ++i) {
     particles[i].position.x = values.x[i];
     particles[i].position.y = values.y[i];
@@ -204,10 +208,12 @@ void calculate(size_t numParts,
 #endif
   {
 
+#ifdef PARALLEL
 #ifdef VECTOR
 #pragma omp parallel for simd
 #else
 #pragma omp parallel for
+#endif
 #endif
     for (size_t i = 0; i < numParts; ++i) {
       float dx = 0;
