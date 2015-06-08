@@ -49,7 +49,7 @@ void ParticleSystem::update(float step, glm::mat4 meshTransform)
   // move particles
   getSOAPositions(&particlePositionsOld);
   assert(particlePositionsOld.size == particlePositionsNew.size);
-  calculate(particles.size(), particlePositionsOld, meshPositions, particlePositionsNew, true, step);
+  calculate(particles.size(), particlePositionsOld, meshPositions, particlePositionsNew, meshTransform, true, step);
   setSOAPositions(particlePositionsNew);
 }
 
@@ -133,6 +133,7 @@ void ParticleSystem::getSOAMeshes(soa_point_t *result)
   }
 
 #ifdef OFFLOAD_BUILD
+#ifdef PRESEND_MESH
   float *meshPosX = result->x;
   float *meshPosY = result->y;
   float *meshPosZ = result->z;
@@ -143,6 +144,7 @@ void ParticleSystem::getSOAMeshes(soa_point_t *result)
   {
   }
 #endif
+#endif
 
 }
 
@@ -151,6 +153,7 @@ void calculate(size_t numParts,
                soa_point_t positions,
                soa_point_t meshPoints,
                soa_point_t out,
+               glm::mat4 meshTransform,
                bool offload,
                float step)
 {
@@ -179,6 +182,7 @@ void calculate(size_t numParts,
 #endif
 
 #ifdef OFFLOAD_BUILD
+#ifdef PRESEND_MESH
 #pragma offload target(mic:0) if (numParts > 0 && offload)\
   in (numParts) \
   in (meshPosX:length(meshPoints.size) REUSE RETAIN) \
@@ -190,6 +194,19 @@ void calculate(size_t numParts,
   in (partPosX:length(numParts) ALLOC FREE) \
   in (partPosY:length(numParts) ALLOC FREE) \
   in (partPosZ:length(numParts) ALLOC FREE)
+#else
+#pragma offload target(mic:0) if (numParts > 0 && offload)\
+  in (numParts) \
+  in (meshPosX:length(meshPoints.size) ALLOC FREE) \
+  in (meshPosY:length(meshPoints.size) ALLOC FREE) \
+  in (meshPosZ:length(meshPoints.size) ALLOC FREE) \
+  out (outX:length(numParts) ALLOC FREE) \
+  out (outY:length(numParts) ALLOC FREE) \
+  out (outZ:length(numParts) ALLOC FREE) \
+  in (partPosX:length(numParts) ALLOC FREE) \
+  in (partPosY:length(numParts) ALLOC FREE) \
+  in (partPosZ:length(numParts) ALLOC FREE)
+#endif
 #endif
   {
 
@@ -220,9 +237,6 @@ void calculate(size_t numParts,
 #endif
       // move away from mesh points
       for (size_t j = 0; j < meshPoints.size; ++j) {
-        /*float distx = meshPosX[j] - partPosX[i];
-          float disty = meshPosY[j] - partPosY[i];
-          float distz = meshPosZ[j] - partPosZ[i];*/
         float distx = partPosX[i] - meshPosX[j];
         float disty = partPosY[i] - meshPosY[j];
         float distz = partPosZ[i] - meshPosZ[j];

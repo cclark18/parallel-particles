@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(Project)
+project(Particles)
 
 set(SRC_DIR "${PROJECT_SOURCE_DIR}/source")
 set(DEP_DIR "${PROJECT_SOURCE_DIR}/dependencies")
@@ -48,7 +48,7 @@ foreach(SOURCE ${SOURCES})
 endforeach(SOURCE)
 
 # use optimization
-SET(CMAKE_CXX_FLAGS "-std=c++11 -O3 -ggdb -openmp")
+SET(CMAKE_CXX_FLAGS "-std=c++11 -O3 -ggdb -openmp -opt-report")
 
 SET(CMAKE_BUILD_TYPE Debug)
 
