@@ -11,19 +11,16 @@ ParticleSystem::ParticleSystem()
   allocate_soa(&particlePositionsNew, partIncr);
   meshPositions.size = 0;
   srand(time(NULL));
+  particlePositionsOld.size = 0;
+  particlePositionsNew.size = 0;
+  meshPositions.size = 0;
 }
 
 ParticleSystem::~ParticleSystem()
 {
-  if (particlePositionsOld.size > 0) {
-    free_soa(&particlePositionsOld);
-  }
-  if (particlePositionsNew.size > 0) {
-    free_soa(&particlePositionsNew);
-  }
-  if (meshPositions.size > 0) {
-    free_soa(&meshPositions);
-  }
+  free_soa(&particlePositionsOld);
+  free_soa(&particlePositionsNew);
+  free_soa(&meshPositions);
 }
 
 void ParticleSystem::update(float step)
@@ -62,6 +59,7 @@ void ParticleSystem::addParticles(int num)
   }
 
   if (particlePositionsOld.size <= particles.size()) {
+    std::cout << "resizing particle structures" << std::endl;
     int oldSize = particlePositionsOld.size;
     free_soa(&particlePositionsOld);
     allocate_soa(&particlePositionsOld, oldSize + partIncr);
@@ -76,9 +74,7 @@ void ParticleSystem::addMesh(Mesh *mesh)
   meshes.push_back(mesh);
 
   size_t size = meshPositions.size;
-  if (size > 0) {
-    free_soa(&meshPositions);
-  }
+  free_soa(&meshPositions);
 
   for (size_t s = 0; s < mesh->shapes.size(); ++s) {
     size += mesh->shapes[s].mesh.positions.size() / 3;
@@ -240,11 +236,15 @@ void calculate(size_t numParts,
 std::vector<float> ParticleSystem::getPositions()
 {
   std::vector<float> result;
+  result.clear();
 
   for (auto iter = particles.begin(); iter != particles.end(); ++iter) {
-    result.push_back(iter->position.x);
-    result.push_back(iter->position.y);
-    result.push_back(iter->position.z);
+    float x = iter->position.x;
+    float y = iter->position.y;
+    float z = iter->position.z;
+    result.push_back(x);
+    result.push_back(y);
+    result.push_back(z);
   }
 
   return result;
@@ -280,8 +280,10 @@ void allocate_soa(soa_point_t *point, size_t size)
 
 void free_soa(soa_point_t *point)
 {
-  _mm_free(point->x);
-  _mm_free(point->y);
-  _mm_free(point->z);
+  if (point->size > 0) {
+    _mm_free(point->x);
+    _mm_free(point->y);
+    _mm_free(point->z);
+  }
   point->size = 0;
 }

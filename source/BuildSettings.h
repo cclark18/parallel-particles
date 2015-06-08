@@ -4,6 +4,6 @@
 //#define DEBUG
 //#define RENDER
 #define VECTOR
-#define OFFLOAD_BUILD
+//#define OFFLOAD_BUILD
 
 #endif

@@ -28,7 +28,7 @@
 #include "BuildSettings.h"
 
 #define FLAT_GRAY 0
-#define PARTS_PER_SEC 50
+#define PARTS_PER_SEC_DEFAULT 50
 
 using namespace std;
 using namespace glm;
@@ -192,6 +192,12 @@ int main(int argc, char **argv)
   pointHandles.installShaders("../resources/shaders/pointVert.glsl", "../resources/shaders/pointFrag.glsl");
 #endif
 
+  int partsPerSec = PARTS_PER_SEC_DEFAULT;
+
+  if (argc > 1) {
+    partsPerSec = atoi(argv[1]);
+  }
+
   Mesh obj1;
   obj1.loadShapes("../resources/models/bunny.obj");
 
@@ -214,7 +220,7 @@ int main(int argc, char **argv)
 
     start = std::chrono::system_clock::now();
 
-    particleSystem.addParticles((int)(deltaTime * 60 * PARTS_PER_SEC));
+    particleSystem.addParticles((int)(deltaTime * 60.0 * partsPerSec));
     particleSystem.update(deltaTime);
 
     vector<float> partPositions = particleSystem.getPositions();
