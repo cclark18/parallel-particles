@@ -1,9 +1,9 @@
 //
-//  Handles.h
+//  PointHandles.h
 //
 
-#ifndef __MarchingCubes__Handles__
-#define __MarchingCubes__Handles__
+#ifndef __MarchingCubes__PointHandles
+#define __MarchingCubes__PointHandles
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,23 +13,17 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "Library/GLSL.h"
+#include "Mesh.h"
 
-class Handles {
+class PointHandles {
   public:
     GLuint prog;
     GLuint aPosition;
-    GLuint aNormal;
-    GLuint uLightPos;
-    GLuint uLightCol;
-    GLuint uMatAmb;
-    GLuint uMatDif;
-    GLuint uMatSpec;
-    GLuint uMatShine;
-    GLuint uProjMatrix;
+    GLuint aColor;
     GLuint uViewMatrix;
-    GLuint uModelMatrix;
-    GLuint uCamPos;
+    GLuint uProjMatrix;
     bool installShaders(const std::string &vShaderName, const std::string &fShaderName);
+    void draw(std::vector<float> positions, std::vector<float> colors);
 };
 
-#endif /* defined(__MarchingCubes__Handles__) */
+#endif /* defined(__MarchingCubes__PointHandles) */

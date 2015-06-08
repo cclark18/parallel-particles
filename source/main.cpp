@@ -6,7 +6,6 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include <math.h>
 #include <time.h>
@@ -20,9 +19,11 @@
 #include "Library/tiny_obj_loader.h"
 #include "Library/GLSL.h"
 #include "Library/GLError.h"
-#include "Handles.h"
+#include "PhongHandles.h"
+#include "PointHandles.h"
 #include "Mesh.h"
 #include "Camera.h"
+#include "ParticleSystem.h"
 
 #define FLAT_GRAY 0
 
@@ -31,11 +32,11 @@ using namespace std;
 using namespace glm;
 int g_width = 1280;
 int g_height = 720;
-vector<tinyobj::shape_t> shapes;
+//vector<tinyobj::shape_t> shapes;
 Camera camera;
 double deltaTime;
-double camSpeed = 1.0f;
-float key_speed = 2.0;
+double mouseSpeed = 200.0f;
+float keySpeed = 4.0;
 
 /* helper function to make sure your matrix handle is correct */
 inline void safe_glUniformMatrix4fv(const GLint handle, const GLfloat data[]) {
@@ -54,26 +55,31 @@ void window_size_callback(GLFWwindow* window, int w, int h)
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
   glm::vec3 move(0.0f, 0.0f, 0.0f);
-  switch (key) {
-  case GLFW_KEY_W:
-  case GLFW_KEY_UP:
-    move = (float)(key_speed * deltaTime) * camera.getForward();
-    break;
-  case GLFW_KEY_A:
-  case GLFW_KEY_LEFT:
-    move = (float)(key_speed * deltaTime) * camera.getStrafe();
-    break;
-  case GLFW_KEY_S:
-  case GLFW_KEY_DOWN:
-    move = (float)(-1 * key_speed * deltaTime) * camera.getForward();
-    break;
-  case GLFW_KEY_D:
-  case GLFW_KEY_RIGHT:
-    move = (float)(-1 * key_speed * deltaTime) * camera.getStrafe();
-    break;
+  if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+    switch (key) {
+    case GLFW_KEY_W:
+    case GLFW_KEY_UP:
+      move = (float)(keySpeed * deltaTime) * camera.getForward();
+      break;
+    case GLFW_KEY_A:
+    case GLFW_KEY_LEFT:
+      move = (float)(-1 * keySpeed * deltaTime) * camera.getStrafe();
+      break;
+    case GLFW_KEY_S:
+    case GLFW_KEY_DOWN:
+      move = (float)(-1 * keySpeed * deltaTime) * camera.getForward();
+      break;
+    case GLFW_KEY_D:
+    case GLFW_KEY_RIGHT:
+      move = (float)(keySpeed * deltaTime) * camera.getStrafe();
+      break;
+    }
+    camera.eye += move;
+    camera.lookat += move;
   }
-  camera.eye += move;
-  camera.lookat += move;
+
+  //cout << "eye: <" << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << ">" << endl;
+  //cout << "lookat: <" << camera.lookat.x << ", " << camera.lookat.y << ", " << camera.lookat.z << ">" << endl;
 }
 
 void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos)
@@ -84,7 +90,7 @@ void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos)
   double dx = xpos - x_center;
   double dy = ypos - y_center;
 
-  float maxMove = camSpeed * deltaTime;
+  float maxMove = mouseSpeed * deltaTime;
   if (dx > 0) {
     dx = dx < maxMove ? dx : maxMove;
   }
@@ -112,17 +118,22 @@ void initGL()
   glPointSize(18);
 }
 
-void setMaterial(Handles *handles, int mat)
+void setPhongMaterial(PhongHandles *phongHandles, int mat)
 {
   switch (mat) {
-  default:
   case FLAT_GRAY:
-    glUniform3f(handles->uMatAmb, 0.1f, 0.1f, 0.1f);
-    glUniform3f(handles->uMatDif, 0.6f, 0.6f, 0.6f);
-    glUniform3f(handles->uMatSpec, 0.3f, 0.3f, 0.3f);
-    glUniform1f(handles->uMatShine, 2.0f);
+    glUniform3f(phongHandles->uMatAmb, 0.1f, 0.1f, 0.1f);
+    glUniform3f(phongHandles->uMatDif, 0.6f, 0.6f, 0.6f);
+    glUniform3f(phongHandles->uMatSpec, 0.3f, 0.3f, 0.3f);
+    glUniform1f(phongHandles->uMatShine, 2.0f);
     break;
+  default:
+    cout << "invalid material!" << endl;
   }
+}
+
+void moveParticles(ParticleSystem particles, int numMeshPoints, soa_point_t meshPos, soa_point_t meshNorm)
+{
 }
 
 int main(int argc, char **argv)
@@ -167,29 +178,59 @@ int main(int argc, char **argv)
 
   srand(time(NULL));
 
-  Handles handles;
-  handles.installShaders("../resources/shaders/phongVert.glsl", "../resources/shaders/phongFrag.glsl");
+  PhongHandles phongHandles;
+  phongHandles.installShaders("../resources/shaders/phongVert.glsl", "../resources/shaders/phongFrag.glsl");
+
+  PointHandles pointHandles;
+  pointHandles.installShaders("../resources/shaders/pointVert.glsl", "../resources/shaders/pointFrag.glsl");
+
   Mesh obj1;
   obj1.loadShapes("../resources/models/bunny.obj");
 
-  glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
+  ParticleSystem particleSystem;
+  particleSystem.addMesh(&obj1);
+  particleSystem.center = glm::vec3(0.0f, 0.0f, 0.0f);
+  //particleSystem.center = glm::vec3(-1.2f, 0.0f, -0.2f);
+  particleSystem.baseColor = glm::vec3(1.0f, 0.0f, 1.0f);
+
+  glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
+  glPointSize(10);
 
   do{
     TimeManager::Instance().CalculateFrameRate(true);
     deltaTime = TimeManager::Instance().DeltaTime;
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
+    for (int i = 0; i < 64; ++i) {
+      particleSystem.addParticle();
+    }
+    //particleSystem.addParticle();
+    particleSystem.update(deltaTime);
+    //cout << "num particles: " << particleSystem.particles.size() << endl;
+
+    //glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDrawBuffer(GL_BACK);
+    //glCullFace(GL_FRONT);
+    //glDrawBuffer(GL_NONE);
     glCullFace(GL_BACK);
-    glUseProgram(handles.prog);
-    glUniform3f(handles.uLightPos, 3.0f, 15.0f, -4.0f);
-    glUniform3f(handles.uLightCol, 1.0f, 1.0f, 1.0f);
-    glUniform3f(handles.uCamPos, camera.eye.x, camera.eye.y, camera.eye.z);
-    setMaterial(&handles, FLAT_GRAY);
-    safe_glUniformMatrix4fv(handles.uModelMatrix, glm::value_ptr(glm::mat4(1.0f)));
-    obj1.draw(&handles);
+    glUseProgram(phongHandles.prog);
+    setPhongMaterial(&phongHandles, FLAT_GRAY);
+    glUniform3f(phongHandles.uLightPos, 3.0f, 15.0f, -4.0f);
+    glUniform3f(phongHandles.uLightCol, 1.0f, 1.0f, 1.0f);
+    glUniform3f(phongHandles.uCamPos, camera.eye.x, camera.eye.y, camera.eye.z);
+    safe_glUniformMatrix4fv(phongHandles.uModelMatrix, glm::value_ptr(glm::mat4(1.0f)));
+    safe_glUniformMatrix4fv(phongHandles.uViewMatrix, glm::value_ptr(camera.getView()));
+    safe_glUniformMatrix4fv(phongHandles.uProjMatrix, glm::value_ptr(camera.getProjection()));
+    phongHandles.draw(&obj1);
+
+    glUseProgram(pointHandles.prog);
+    safe_glUniformMatrix4fv(pointHandles.uViewMatrix, glm::value_ptr(camera.getView()));
+    safe_glUniformMatrix4fv(pointHandles.uProjMatrix, glm::value_ptr(camera.getProjection()));
+    pointHandles.draw(particleSystem.getPositions(), particleSystem.getColors());
+    //cout << "num drawn: " << particleSystem.getPositions().size() / 3 << endl;
+
+    glUseProgram(0);
     glfwSwapBuffers(window);
     glfwPollEvents();
   } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS

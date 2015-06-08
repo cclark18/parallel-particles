@@ -2,11 +2,15 @@
 
 Camera::Camera()
 {
-  this->lookat = glm::vec3(0.0f, 0.0f, 1.0f);
-  this->eye = glm::vec3(0.0f, 0.0f, 0.0f);
-  this->up = glm::vec3(0.0f, 1.0f, 0.0f);
-  this->fov = DEFAULT_FOV;
-  this->fov = DEFAULT_FOV;
+  eye = glm::vec3(-2.0f, 0.0f, 0.0f);
+  lookat.x = eye.x + cos(phi * M_PI / 180) * cos(theta * M_PI / 180);
+  lookat.y = eye.y + sin(phi * M_PI / 180);
+  lookat.z = eye.z + cos(phi * M_PI / 180) * sin(-1.0 * theta * M_PI / 180);
+  up = glm::vec3(0.0f, 1.0f, 0.0f);
+  fov = DEFAULT_FOV;
+  aspect = DEFAULT_ASPECT;
+  _near = DEFAULT_NEAR;
+  _far = DEFAULT_FAR;
 }
 
 Camera::Camera(glm::vec3 lookat, glm::vec3 eye, glm::vec3 up,
@@ -23,25 +27,25 @@ Camera::Camera(glm::vec3 lookat, glm::vec3 eye, glm::vec3 up,
 
 glm::mat4 Camera::getView()
 {
-  return glm::lookAt(this->eye, this->lookat, this->up);
+  return glm::lookAt(eye, lookat, up);
 }
 
 glm::mat4 Camera::getProjection()
 {
-  return glm::perspective(this->fov, this->aspect, this->_near, this->_far);
+  return glm::perspective(fov, aspect, _near, _far);
 }
 
 glm::vec3 Camera::getForward()
 {
-  return glm::normalize(this->lookat - this->eye);
+  return glm::normalize(lookat - eye);
 }
 glm::vec3 Camera::getStrafe()
 {
-  return glm::normalize(glm::cross(this->lookat - this->eye, this->up));
+  return glm::normalize(glm::cross(lookat - eye, up));
 }
 glm::vec3 Camera::getUp()
 {
-  return glm::normalize(this->up);
+  return glm::normalize(up);
 }
 
 void Camera::moveHoriz(float step)

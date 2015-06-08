@@ -1,6 +1,7 @@
-#include "Handles.h"
+#include "PointHandles.h"
+//#define DEBUG
 
-bool Handles::installShaders(const std::string &vShaderName, const std::string &fShaderName) 
+bool PointHandles::installShaders(const std::string &vShaderName, const std::string &fShaderName) 
 {
   GLint rc;
 
@@ -51,18 +52,38 @@ bool Handles::installShaders(const std::string &vShaderName, const std::string &
   /* get handles to attribute data */
 
   this->aPosition = GLSL::getAttribLocation(this->prog, "aPosition");
-  this->aNormal = GLSL::getAttribLocation(this->prog, "aNormal");
   this->uProjMatrix = GLSL::getUniformLocation(this->prog, "uProjMatrix");
   this->uViewMatrix = GLSL::getUniformLocation(this->prog, "uViewMatrix");
-  this->uModelMatrix = GLSL::getUniformLocation(this->prog, "uModelMatrix");
-  this->uLightPos = GLSL::getUniformLocation(this->prog, "uLightPos");
-  this->uLightCol = GLSL::getUniformLocation(this->prog, "uLightCol");
-  this->uMatAmb = GLSL::getUniformLocation(this->prog, "UaColor");
-  this->uMatDif = GLSL::getUniformLocation(this->prog, "UdColor");
-  this->uMatSpec = GLSL::getUniformLocation(this->prog, "UsColor");
-  this->uMatShine = GLSL::getUniformLocation(this->prog, "Ushine");
-  this->uCamPos = GLSL::getUniformLocation(this->prog, "uCamPos");
+  this->aColor = GLSL::getAttribLocation(this->prog, "aColor");
 
   assert(glGetError() == GL_NO_ERROR);
   return true;
+}
+
+void PointHandles::draw(std::vector<float> points, std::vector<float> colors) {
+  GLuint posbuf;
+  GLuint colbuf;
+
+#ifdef DEBUG
+  if (points.size() > 0) {
+    for (int i = 0; i < points.size(); i += 3) {
+      std::cout << points[i*3+0] << ", " << points[i*3+0] << ", " << points[i*3+0] << std::endl;
+    }
+  }
+#endif
+
+  glGenBuffers(1, &posbuf);
+  glGenBuffers(1, &colbuf);
+
+  glBindBuffer(GL_ARRAY_BUFFER, posbuf);
+  GLSL::enableVertexAttribArray(this->aPosition);
+  glBufferData(GL_ARRAY_BUFFER, points.size()*sizeof(float), &points[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(this->aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  
+  glBindBuffer(GL_ARRAY_BUFFER, colbuf);
+  GLSL::enableVertexAttribArray(this->aColor);
+  glVertexAttribPointer(this->aColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glBufferData(GL_ARRAY_BUFFER, colors.size()*sizeof(float), &colors[0], GL_STATIC_DRAW);
+
+  glDrawElements(GL_POINTS, points.size() / 3, GL_UNSIGNED_INT, 0);
 }

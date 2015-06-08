@@ -1,5 +1,3 @@
-#define MAX_LIGHTS 3
-
 attribute vec3 aPosition;
 attribute vec3 aNormal;
 
@@ -12,7 +10,6 @@ uniform vec3 UsColor;	// specular
 uniform float Ushine;
 
 varying vec3 vNormal;
-varying vec3 vCol;
 varying vec3 vPos;
 
 void main() {

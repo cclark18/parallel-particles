@@ -7,6 +7,7 @@ void Mesh::loadShapes(const std::string &objFile) {
     std::cerr << err << std::endl;
   }
   this->resize_obj();
+  this->computeNormals();
   this->sendBufs();
   //this->computeBound();
 }
@@ -111,6 +112,8 @@ void Mesh::resize_obj() {
       this->shapes[i].mesh.positions[3*v+2] = (this->shapes[i].mesh.positions[3*v+2] - shiftZ) * scaleZ;
       assert(this->shapes[i].mesh.positions[3*v+2] >= -1.0 - epsilon);
       assert(this->shapes[i].mesh.positions[3*v+2] <= 1.0 + epsilon);
+
+      //std::cout << this->shapes[i].mesh.positions[3*v+0] << ", " << this->shapes[i].mesh.positions[3*v+1] << ", " << this->shapes[i].mesh.positions[3*v+2] << std::endl;
     }
   }
 }
@@ -145,32 +148,69 @@ void Mesh::sendBufs() {
 
 // binds all mesh attributes and draws triangles
 // uniforms for the object should be sent prior to this call
-void Mesh::draw(Handles *handles)
+/*void Mesh::draw(PhongHandles *handles)
+  {
+// Enable and bind position array for drawing
+GLSL::enableVertexAttribArray(handles->aPosition);
+glBindBuffer(GL_ARRAY_BUFFER, this->posBufObj);
+glVertexAttribPointer(handles->aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+// Enable and bind normal array for drawing
+GLSL::enableVertexAttribArray(handles->aNormal);
+glBindBuffer(GL_ARRAY_BUFFER, this->norBufObj);
+glVertexAttribPointer(handles->aNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+for (int s = 0; s < this->shapes.size(); ++s) {
+// Bind index array for drawing
+int nIndices = (int)this->shapes[s].mesh.indices.size();
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indBufObj);
+
+glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
+}
+
+// Disable and unbind
+GLSL::disableVertexAttribArray(handles->aPosition);
+GLSL::disableVertexAttribArray(handles->aNormal);
+glBindBuffer(GL_ARRAY_BUFFER, 0);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}*/
+
+
+void Mesh::computeNormals()
 {
-  // Enable and bind position array for drawing
-  GLSL::enableVertexAttribArray(handles->aPosition);
-  glBindBuffer(GL_ARRAY_BUFFER, this->posBufObj);
-  glVertexAttribPointer(handles->aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  // compute the normals per vertex
+  int idx1, idx2, idx3;
+  glm::vec3 v1, v2, v3;
+  //for every vertex initialize a normal to 0
+  for (size_t s = 0; s < this->shapes.size(); ++s) {
+    this->shapes[s].mesh.normals.clear();
+    for (int j = 0; j < this->shapes[s].mesh.positions.size()/3; j++) {
+      this->shapes[s].mesh.normals.push_back(0);
+      this->shapes[s].mesh.normals.push_back(0);
+      this->shapes[s].mesh.normals.push_back(0);
+    }
+    // compute the normals for every face
+    //then add its normal to its associated vertex
+    for (int i = 0; i < this->shapes[s].mesh.indices.size()/3; i++) {
+      idx1 = this->shapes[s].mesh.indices[3*i+0];
+      idx2 = this->shapes[s].mesh.indices[3*i+1];
+      idx3 = this->shapes[s].mesh.indices[3*i+2];
+      v1 = glm::vec3(this->shapes[s].mesh.positions[3*idx1 +0],this->shapes[s].mesh.positions[3*idx1 +1], this->shapes[s].mesh.positions[3*idx1 +2]); 
+      v2 = glm::vec3(this->shapes[s].mesh.positions[3*idx2 +0],this->shapes[s].mesh.positions[3*idx2 +1], this->shapes[s].mesh.positions[3*idx2 +2]); 
+      v3 = glm::vec3(this->shapes[s].mesh.positions[3*idx3 +0],this->shapes[s].mesh.positions[3*idx3 +1], this->shapes[s].mesh.positions[3*idx3 +2]); 
 
-  // Enable and bind normal array for drawing
-  GLSL::enableVertexAttribArray(handles->aNormal);
-  glBindBuffer(GL_ARRAY_BUFFER, this->norBufObj);
-  glVertexAttribPointer(handles->aNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-  for (int s = 0; s < this->shapes.size(); ++s) {
-    // Bind index array for drawing
-    int nIndices = (int)this->shapes[s].mesh.indices.size();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indBufObj);
-
-    glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
+      glm::vec3 sideA = v2 - v1;
+      glm::vec3 sideB = v3 - v1;
+      glm::vec3 norm = glm::cross(sideA, sideB);
+      this->shapes[s].mesh.normals[3*idx1+0] += norm.x;
+      this->shapes[s].mesh.normals[3*idx1+1] += norm.y;
+      this->shapes[s].mesh.normals[3*idx1+2] += norm.z;
+      this->shapes[s].mesh.normals[3*idx2+0] += norm.x;
+      this->shapes[s].mesh.normals[3*idx2+1] += norm.y;
+      this->shapes[s].mesh.normals[3*idx2+2] += norm.z;
+      this->shapes[s].mesh.normals[3*idx3+0] += norm.x;
+      this->shapes[s].mesh.normals[3*idx3+1] += norm.y;
+      this->shapes[s].mesh.normals[3*idx3+2] += norm.z;
+    }
   }
-
-  GLSL::disableVertexAttribArray(handles->aPosition);
-  GLSL::disableVertexAttribArray(handles->aNormal);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  // Disable and unbind
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

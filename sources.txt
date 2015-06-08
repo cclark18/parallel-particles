@@ -12,9 +12,11 @@ set(HEADERS
 # List all .c / .cpp files here
 set(SOURCES
    main.cpp
-   Handles.cpp
+   PhongHandles.cpp
+   PointHandles.cpp
    Mesh.cpp
    Camera.cpp
+   ParticleSystem.cpp
 
    Library/GLSL.cpp
    Library/tiny_obj_loader.cc

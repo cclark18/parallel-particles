@@ -1,8 +1,9 @@
 #ifndef __MESH_H
 #define __MESH_H
 #include <iostream>
-#include "Handles.h"
+//#include "PhongHandles.h"
 #include "Library/tiny_obj_loader.h"
+#include "Library/GLSL.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp" //perspective, trans etc
 #include "glm/gtc/type_ptr.hpp" //value_ptr
@@ -15,12 +16,9 @@ class Mesh {
     // pass a string that names the .obj file to be loaded,
     // e.g. "cube.obj"
     void loadShapes(const std::string &objFile);
-    void draw(Handles *handles);
     float radius;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
-    std::vector<float> norBuf;
-    std::vector<float> posBuf;
     GLuint posBufObj;
     GLuint norBufObj;
     GLuint indBufObj;
@@ -29,6 +27,7 @@ class Mesh {
     void computeBound(void);
     void resize_obj(void);
     void sendBufs(void);
+    void computeNormals();
     glm::vec3 center;
     glm::vec3 dimensions;
 };
