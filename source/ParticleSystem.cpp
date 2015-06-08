@@ -1,5 +1,8 @@
 #include "ParticleSystem.h"
-//#define DEBUG
+#define ALLOC alloc_if(1)
+#define FREE free_if(1)
+#define REUSE alloc_if(0)
+#define RETAIN free_if(0)
 
 ParticleSystem::ParticleSystem()
 {
@@ -30,7 +33,7 @@ void ParticleSystem::update(float step)
   while (iter != particles.end()) {
     iter->age += step;
     if (iter->age > maxAge) {
-      std::cout << "disposing particle... total: " << particles.size() << std::endl;
+      //std::cout << "disposing particle... total: " << particles.size() << std::endl;
       iter = particles.erase(iter);
     }
     else {
@@ -41,7 +44,7 @@ void ParticleSystem::update(float step)
   // move particles
   getSOAPositions(&particlePositionsOld);
   assert(particlePositionsOld.size == particlePositionsNew.size);
-  calculate(particles.size(), particlePositionsOld, meshPositions, particlePositionsNew, false, step);
+  calculate(particles.size(), particlePositionsOld, meshPositions, particlePositionsNew, true, step);
   setSOAPositions(particlePositionsNew);
 }
 
@@ -95,7 +98,6 @@ void ParticleSystem::getSOAPositions(soa_point_t *result)
   }
 }
 
-
 void ParticleSystem::setSOAPositions(soa_point_t values)
 {
   for (int i = 0; i < particles.size(); ++i) {
@@ -118,6 +120,19 @@ void ParticleSystem::getSOAMeshes(soa_point_t *result)
       }
     }
   }
+
+#ifdef OFFLOAD_BUILD
+  float *meshPosX = result->x;
+  float *meshPosY = result->y;
+  float *meshPosZ = result->z;
+#pragma offload target(mic:0) \
+  in (meshPosX:length(result->size) ALLOC RETAIN) \
+  in (meshPosY:length(result->size) ALLOC RETAIN) \
+  in (meshPosZ:length(result->size) ALLOC RETAIN)
+  {
+  }
+#endif
+
 }
 
 // this is where the magic (parallelism) happens
@@ -150,57 +165,75 @@ void calculate(size_t numParts,
   __assume_aligned(outX, 64);
   __assume_aligned(outY, 64);
   __assume_aligned(outZ, 64);
+#endif
 
+#ifdef OFFLOAD_BUILD
+#pragma offload target(mic:0) if (numParts > 0 && offload)\
+  in (numParts) \
+  in (meshPosX:length(meshPoints.size) REUSE RETAIN) \
+  in (meshPosY:length(meshPoints.size) REUSE RETAIN) \
+  in (meshPosZ:length(meshPoints.size) REUSE RETAIN) \
+  out (outX:length(numParts) ALLOC FREE) \
+  out (outY:length(numParts) ALLOC FREE) \
+  out (outZ:length(numParts) ALLOC FREE) \
+  in (partPosX:length(numParts) ALLOC FREE) \
+  in (partPosY:length(numParts) ALLOC FREE) \
+  in (partPosZ:length(numParts) ALLOC FREE)
+#endif
+  {
+
+#ifdef VECTOR
 #pragma omp parallel for simd
 #else
 #pragma omp parallel for
 #endif
-  for (size_t i = 0; i < numParts; ++i) {
-    float dx = 0;
-    float dy = 0;
-    float dz = 0;
-    // move away from other particles
-    for (size_t j = 0; j < numParts; ++j) {
-      float distx = partPosX[i] - partPosX[j];
-      float disty = partPosY[i] - partPosY[j];
-      float distz = partPosZ[i] - partPosZ[j];
-      float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-      float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
-      dx += distx * force;
-      dy += disty * force;
-      dz += distz * force;
-    }
+    for (size_t i = 0; i < numParts; ++i) {
+      float dx = 0;
+      float dy = 0;
+      float dz = 0;
+      // move away from other particles
+      for (size_t j = 0; j < numParts; ++j) {
+        float distx = partPosX[i] - partPosX[j];
+        float disty = partPosY[i] - partPosY[j];
+        float distz = partPosZ[i] - partPosZ[j];
+        float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
+        float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
+        dx += distx * force;
+        dy += disty * force;
+        dz += distz * force;
+      }
 
 #ifdef DEBUG
-    std::cout << "----- MESH POSITIONS -----" << std::endl;
-    std::cout << meshPoints.size << std::endl;
+      //std::cout << "----- MESH POSITIONS -----" << std::endl;
+      //std::cout << meshPoints.size << std::endl;
 #endif
-    // move away from mesh points
-    for (size_t j = 0; j < meshPoints.size; ++j) {
-      /*float distx = meshPosX[j] - partPosX[i];
-      float disty = meshPosY[j] - partPosY[i];
-      float distz = meshPosZ[j] - partPosZ[i];*/
-      float distx = partPosX[i] - meshPosX[j];
-      float disty = partPosY[i] - meshPosY[j];
-      float distz = partPosZ[i] - meshPosZ[j];
-      float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-      float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
-      dx += distx * force;
-      dy += disty * force;
-      dz += distz * force;
+      // move away from mesh points
+      for (size_t j = 0; j < meshPoints.size; ++j) {
+        /*float distx = meshPosX[j] - partPosX[i];
+          float disty = meshPosY[j] - partPosY[i];
+          float distz = meshPosZ[j] - partPosZ[i];*/
+        float distx = partPosX[i] - meshPosX[j];
+        float disty = partPosY[i] - meshPosY[j];
+        float distz = partPosZ[i] - meshPosZ[j];
+        float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
+        float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
+        dx += distx * force;
+        dy += disty * force;
+        dz += distz * force;
 #ifdef DEBUG
-      std::cout << "<" << meshPosX[j] << ", " << meshPosY[j] << ", " << meshPosZ[j] << ">" << std::endl;
+        //std::cout << "<" << meshPosX[j] << ", " << meshPosY[j] << ", " << meshPosZ[j] << ">" << std::endl;
 #endif
-    }
+      }
 
-    dy -= 0.01;
-    // apply translations
-    /*outX[i] = partPosX[i];
-    outY[i] = partPosY[i];
-    outZ[i] = partPosZ[i];*/
-    outX[i] = partPosX[i] + dx;
-    outY[i] = partPosY[i] + dy;
-    outZ[i] = partPosZ[i] + dz;
+      dy -= 0.01;
+      // apply translations
+      /*outX[i] = partPosX[i];
+        outY[i] = partPosY[i];
+        outZ[i] = partPosZ[i];*/
+      outX[i] = partPosX[i] + dx;
+      outY[i] = partPosY[i] + dy;
+      outZ[i] = partPosZ[i] + dz;
+    }
   }
 }
 

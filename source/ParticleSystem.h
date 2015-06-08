@@ -3,6 +3,7 @@
 #include "SOAPoint.h"
 #include "Particle.h"
 #include "Mesh.h"
+#include "BuildSettings.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp" //perspective, trans etc
 #include "glm/gtc/type_ptr.hpp" //value_ptr

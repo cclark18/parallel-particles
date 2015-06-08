@@ -48,7 +48,7 @@ foreach(SOURCE ${SOURCES})
 endforeach(SOURCE)
 
 # use optimization
-SET(CMAKE_CXX_FLAGS "-std=gnu++0x -O3 -ggdb -openmp")
+SET(CMAKE_CXX_FLAGS "-std=c++11 -O3 -ggdb -openmp")
 
 SET(CMAKE_BUILD_TYPE Debug)
 

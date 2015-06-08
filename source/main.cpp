@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <chrono>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -14,7 +15,7 @@
 #include "glm/gtc/type_ptr.hpp" //value_ptr
 #include <memory>
 
-#include "Library/TimeManager.h"
+//#include "Library/TimeManager.h"
 #include "Library/InitObjects.h"
 #include "Library/tiny_obj_loader.h"
 #include "Library/GLSL.h"
@@ -24,18 +25,21 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "ParticleSystem.h"
+#include "BuildSettings.h"
 
 #define FLAT_GRAY 0
-#define PARTS_PER_SEC 3
+#define PARTS_PER_SEC 50
 
-GLFWwindow* window;
 using namespace std;
 using namespace glm;
+
+double deltaTime;
+#ifdef RENDER
+GLFWwindow* window;
 int g_width = 1280;
 int g_height = 720;
 //vector<tinyobj::shape_t> shapes;
 Camera camera;
-double deltaTime;
 double mouseSpeed = 200.0f;
 float keySpeed = 4.0;
 
@@ -135,13 +139,11 @@ void setPhongMaterial(PhongHandles *phongHandles, int mat)
     cout << "invalid material!" << endl;
   }
 }
-
-void moveParticles(ParticleSystem particles, int numMeshPoints, soa_point_t meshPos, soa_point_t meshNorm)
-{
-}
+#endif
 
 int main(int argc, char **argv)
 {
+#ifdef RENDER
   // Initialise GLFW
   if (!glfwInit()) {
     fprintf(stderr, "Failed to initialize GLFW\n");
@@ -180,13 +182,15 @@ int main(int argc, char **argv)
   initGL();
   assert(glGetError() == GL_NO_ERROR);
 
-  srand(time(NULL));
+  glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
+  glPointSize(5);
 
   PhongHandles phongHandles;
   phongHandles.installShaders("../resources/shaders/phongVert.glsl", "../resources/shaders/phongFrag.glsl");
 
   PointHandles pointHandles;
   pointHandles.installShaders("../resources/shaders/pointVert.glsl", "../resources/shaders/pointFrag.glsl");
+#endif
 
   Mesh obj1;
   obj1.loadShapes("../resources/models/bunny.obj");
@@ -197,20 +201,30 @@ int main(int argc, char **argv)
   particleSystem.center = glm::vec3(0.0f, 1.0f, 0.0f);
   particleSystem.baseColor = glm::vec3(0.949f, 0.337f, 0.133f);
 
-  glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
-  glPointSize(5);
+  std::chrono::time_point<std::chrono::system_clock> last, cur, start, end;
+  cur = std::chrono::system_clock::now();
 
   do{
-    TimeManager::Instance().CalculateFrameRate(true);
-    deltaTime = TimeManager::Instance().DeltaTime;
+    //TimeManager::Instance().CalculateFrameRate(true);
+    //deltaTime = TimeManager::Instance().DeltaTime;
+    last = cur;
+    cur = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = cur-last;
+    deltaTime = elapsed_seconds.count();
 
-    /*for (int i = 0; i < 64; ++i) {
-      particleSystem.addParticle();
-    }*/
+    start = std::chrono::system_clock::now();
+
     particleSystem.addParticles((int)(deltaTime * 60 * PARTS_PER_SEC));
     particleSystem.update(deltaTime);
-    //cout << "num particles: " << particleSystem.particles.size() << endl;
 
+    vector<float> partPositions = particleSystem.getPositions();
+    vector<float> partColors = particleSystem.getColors();
+
+    end = std::chrono::system_clock::now();
+    elapsed_seconds = end-start;
+    cout << "Particle calculation time: " << elapsed_seconds.count() << "s (" << partPositions.size() / 3 << " particles)" << endl;
+
+#ifdef RENDER
     //glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -231,7 +245,7 @@ int main(int argc, char **argv)
     glUseProgram(pointHandles.prog);
     safe_glUniformMatrix4fv(pointHandles.uViewMatrix, glm::value_ptr(camera.getView()));
     safe_glUniformMatrix4fv(pointHandles.uProjMatrix, glm::value_ptr(camera.getProjection()));
-    pointHandles.draw(particleSystem.getPositions(), particleSystem.getColors());
+    pointHandles.draw(partPositions, partColors);
     //cout << "num drawn: " << particleSystem.getPositions().size() / 3 << endl;
 
     glUseProgram(0);
@@ -239,7 +253,12 @@ int main(int argc, char **argv)
     glfwPollEvents();
   } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS
       && glfwWindowShouldClose(window) == 0);
+#else
+  } while (true);
+#endif
 
+#ifdef RENDER
   glfwTerminate();
+#endif
   return 0;
 }

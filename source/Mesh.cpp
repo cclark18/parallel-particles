@@ -1,5 +1,4 @@
 #include "Mesh.h"
-#define DEBUG
 
 void Mesh::loadShapes(const std::string &objFile) {
   std::string err = tinyobj::LoadObj(this->shapes, this->materials, objFile.c_str());
@@ -8,7 +7,9 @@ void Mesh::loadShapes(const std::string &objFile) {
   }
   this->resize_obj();
   this->computeNormals();
+#ifdef RENDER
   this->sendBufs();
+#endif
   //this->computeBound();
 }
 

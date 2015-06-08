@@ -20,7 +20,6 @@ set(SOURCES
 
    Library/GLSL.cpp
    Library/tiny_obj_loader.cc
-   Library/TimeManager.cpp
    Library/InitObjects.cpp
    Library/GLError.cpp
 )
