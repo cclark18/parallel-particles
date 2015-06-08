@@ -28,7 +28,8 @@
 #include "BuildSettings.h"
 
 #define FLAT_GRAY 0
-#define PARTS_PER_SEC_DEFAULT 50
+#define MOVE_RANGE 2
+#define PARTS_PER_SEC_DEFAULT 10
 
 using namespace std;
 using namespace glm;
@@ -207,6 +208,9 @@ int main(int argc, char **argv)
   particleSystem.center = glm::vec3(0.0f, 1.0f, 0.0f);
   particleSystem.baseColor = glm::vec3(0.949f, 0.337f, 0.133f);
 
+  glm::vec3 objCenter = glm::vec3(0.0f, 0.0f, 0.0f);
+  bool moveRight = true;
+
   std::chrono::time_point<std::chrono::system_clock> last, cur, start, end;
   cur = std::chrono::system_clock::now();
 
@@ -218,10 +222,30 @@ int main(int argc, char **argv)
     std::chrono::duration<double> elapsed_seconds = cur-last;
     deltaTime = elapsed_seconds.count();
 
+    // clunky "bunny hop" animation
+    if (moveRight) {
+      objCenter.x += deltaTime;
+    }
+    else {
+      objCenter.x -= deltaTime;
+    }
+    if (objCenter.x > MOVE_RANGE) {
+      moveRight = false;
+    }
+    if (objCenter.x < -1 * MOVE_RANGE) {
+      moveRight = true;
+    }
+    objCenter.y = 0.6 * abs(sin(objCenter.x * 3));
+    glm::mat4 translate = glm::translate(glm::mat4(1.0f), objCenter);
+    
+#ifdef DEBUG
+    cout << "Frame delta time: " << elapsed_seconds.count() << endl;
+#endif
+
     start = std::chrono::system_clock::now();
 
     particleSystem.addParticles((int)(deltaTime * 60.0 * partsPerSec));
-    particleSystem.update(deltaTime);
+    particleSystem.update(deltaTime, translate);
 
     vector<float> partPositions = particleSystem.getPositions();
     vector<float> partColors = particleSystem.getColors();
@@ -243,7 +267,7 @@ int main(int argc, char **argv)
     glUniform3f(phongHandles.uLightPos, 3.0f, 15.0f, -4.0f);
     glUniform3f(phongHandles.uLightCol, 1.0f, 1.0f, 1.0f);
     glUniform3f(phongHandles.uCamPos, camera.eye.x, camera.eye.y, camera.eye.z);
-    safe_glUniformMatrix4fv(phongHandles.uModelMatrix, glm::value_ptr(glm::mat4(1.0f)));
+    safe_glUniformMatrix4fv(phongHandles.uModelMatrix, glm::value_ptr(translate));
     safe_glUniformMatrix4fv(phongHandles.uViewMatrix, glm::value_ptr(camera.getView()));
     safe_glUniformMatrix4fv(phongHandles.uProjMatrix, glm::value_ptr(camera.getProjection()));
     phongHandles.draw(&obj1);

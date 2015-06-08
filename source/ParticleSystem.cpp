@@ -23,15 +23,23 @@ ParticleSystem::~ParticleSystem()
   free_soa(&meshPositions);
 }
 
-void ParticleSystem::update(float step)
+void ParticleSystem::update(float step, glm::mat4 meshTransform)
 {
   // update time values, discard particles that have aged completely
   auto iter = particles.begin();
+#ifdef DEBUG
+  std::cout << "aging particles... total: " << particles.size() << std::endl;
+#endif
   while (iter != particles.end()) {
     iter->age += step;
     if (iter->age > maxAge) {
-      //std::cout << "disposing particle... total: " << particles.size() << std::endl;
+#ifdef DEBUG
+      std::cout << "disposing particle... total: " << particles.size() << std::endl;
+#endif
       iter = particles.erase(iter);
+#ifdef DEBUG
+      std::cout << "disposed particle... total: " << particles.size() << std::endl;
+#endif
     }
     else {
       ++iter;
@@ -47,6 +55,9 @@ void ParticleSystem::update(float step)
 
 void ParticleSystem::addParticles(int num)
 {
+#ifdef DEBUG
+  std::cout << "adding " << num << " particles..." << std::endl;
+#endif
   for (int i = 0; i < num; ++i) {
     Particle particle;
     particle.age = 0;
@@ -59,7 +70,9 @@ void ParticleSystem::addParticles(int num)
   }
 
   if (particlePositionsOld.size <= particles.size()) {
+#ifdef DEBUG
     std::cout << "resizing particle structures" << std::endl;
+#endif
     int oldSize = particlePositionsOld.size;
     free_soa(&particlePositionsOld);
     allocate_soa(&particlePositionsOld, oldSize + partIncr);
@@ -81,7 +94,9 @@ void ParticleSystem::addMesh(Mesh *mesh)
   }
 
   allocate_soa(&meshPositions, size);
+#ifdef DEBUG
   std::cout << size << std::endl;
+#endif
   getSOAMeshes(&meshPositions);
 }
 
@@ -212,7 +227,7 @@ void calculate(size_t numParts,
         float disty = partPosY[i] - meshPosY[j];
         float distz = partPosZ[i] - meshPosZ[j];
         float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-        float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
+        float force = 20.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
         dx += distx * force;
         dy += disty * force;
         dz += distz * force;
@@ -221,7 +236,7 @@ void calculate(size_t numParts,
 #endif
       }
 
-      dy -= 0.01;
+      dy -= 0.002;
       // apply translations
       /*outX[i] = partPosX[i];
         outY[i] = partPosY[i];

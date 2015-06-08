@@ -25,7 +25,7 @@ class ParticleSystem
     glm::vec3 baseColor;
     void addParticles(int num);
     void addMesh(Mesh *mesh);
-    void update(float step);
+    void update(float step, glm::mat4 meshTransform);
 
     // get values in opengl-friendly format
     std::vector<float> getPositions();
@@ -36,7 +36,7 @@ class ParticleSystem
     void getSOAMeshes(soa_point_t *result);
 
     //const size_t maxParticles = 500;
-    float maxAge = 5; // time in seconds
+    float maxAge = 10; // time in seconds
     bool offload;
     std::vector<Particle> particles;
   private:
