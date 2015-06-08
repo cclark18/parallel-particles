@@ -5,6 +5,5 @@
 //#define RENDER
 #define VECTOR
 #define OFFLOAD_BUILD
-//#define PRESEND_MESH
 
 #endif

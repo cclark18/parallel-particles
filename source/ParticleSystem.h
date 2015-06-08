@@ -51,7 +51,7 @@ void calculate(size_t numParts,
                soa_point_t particles,
                soa_point_t meshPoints,
                soa_point_t out,
-               glm::mat4 meshTransform,
+               float meshTransform[4][4],
                bool offload,
                float step);
 void allocate_soa(soa_point_t *point, size_t size);
