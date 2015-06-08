@@ -14,6 +14,7 @@ ParticleSystem::ParticleSystem()
   particlePositionsOld.size = 0;
   particlePositionsNew.size = 0;
   meshPositions.size = 0;
+  maxAge = 5;
 }
 
 ParticleSystem::~ParticleSystem()
@@ -56,7 +57,7 @@ void ParticleSystem::update(float step, glm::mat4 meshTransform)
   // move particles
   getSOAPositions(&particlePositionsOld);
   assert(particlePositionsOld.size == particlePositionsNew.size);
-  calculate(particles.size(), particlePositionsOld, meshPositions, particlePositionsNew, transformArray, true, step);
+  calculate(particles.size(), particlePositionsOld, meshPositions, particlePositionsNew, transformArray, step);
   setSOAPositions(particlePositionsNew);
 }
 
@@ -161,7 +162,6 @@ void calculate(size_t numParts,
                soa_point_t meshPoints,
                soa_point_t out,
                float meshTransform[4][4],
-               bool offload,
                float step)
 {
   float *partPosX = positions.x;

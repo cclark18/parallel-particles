@@ -36,7 +36,7 @@ class ParticleSystem
     void getSOAMeshes(soa_point_t *result);
 
     //const size_t maxParticles = 500;
-    float maxAge = 10; // time in seconds
+    float maxAge; // time in seconds
     bool offload;
     std::vector<Particle> particles;
   private:
@@ -52,7 +52,6 @@ void calculate(size_t numParts,
                soa_point_t meshPoints,
                soa_point_t out,
                float meshTransform[4][4],
-               bool offload,
                float step);
 void allocate_soa(soa_point_t *point, size_t size);
 void free_soa(soa_point_t *point);

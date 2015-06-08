@@ -193,12 +193,6 @@ int main(int argc, char **argv)
   pointHandles.installShaders("../resources/shaders/pointVert.glsl", "../resources/shaders/pointFrag.glsl");
 #endif
 
-  int partsPerSec = PARTS_PER_SEC_DEFAULT;
-
-  if (argc > 1) {
-    partsPerSec = atoi(argv[1]);
-  }
-
   Mesh obj1;
   obj1.loadShapes("../resources/models/bunny.obj");
 
@@ -210,6 +204,16 @@ int main(int argc, char **argv)
 
   glm::vec3 objCenter = glm::vec3(0.0f, 0.0f, 0.0f);
   bool moveRight = true;
+
+  int partsPerSec = PARTS_PER_SEC_DEFAULT;
+  if (argc > 1) {
+    partsPerSec = atoi(argv[1]);
+  }
+  if (argc > 2) {
+    particleSystem.maxAge = atoi(argv[2]);
+  }
+
+
 
   std::chrono::time_point<std::chrono::system_clock> last, cur, start, end;
   cur = std::chrono::system_clock::now();
