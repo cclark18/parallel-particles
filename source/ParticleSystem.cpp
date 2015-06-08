@@ -189,7 +189,7 @@ void calculate(size_t numParts,
 #endif
 
 #ifdef OFFLOAD_BUILD
-#pragma offload target(mic:0) if (numParts > 0 && offload)\
+#pragma offload target(mic:0) if (numParts > 0)\
   in (numParts) \
   in (meshTransform:length(16)) \
   in (meshPosX:length(meshPoints.size) REUSE RETAIN) \
