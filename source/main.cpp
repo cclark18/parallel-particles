@@ -26,6 +26,7 @@
 #include "ParticleSystem.h"
 
 #define FLAT_GRAY 0
+#define PARTS_PER_SEC 3
 
 GLFWwindow* window;
 using namespace std;
@@ -73,6 +74,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     case GLFW_KEY_RIGHT:
       move = (float)(keySpeed * deltaTime) * camera.getStrafe();
       break;
+    case GLFW_KEY_P:
+      cout << "cam pos: <" << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << ">" << endl;
+      cout << "cam angle: " << camera.theta << ", " << camera.phi << endl;
     }
     camera.eye += move;
     camera.lookat += move;
@@ -189,9 +193,9 @@ int main(int argc, char **argv)
 
   ParticleSystem particleSystem;
   particleSystem.addMesh(&obj1);
-  particleSystem.center = glm::vec3(0.0f, 0.0f, 0.0f);
-  //particleSystem.center = glm::vec3(-1.2f, 0.0f, -0.2f);
-  particleSystem.baseColor = glm::vec3(1.0f, 0.0f, 1.0f);
+  //particleSystem.center = glm::vec3(0.0f, 0.0f, 0.0f);
+  particleSystem.center = glm::vec3(0.0f, 1.0f, 0.0f);
+  particleSystem.baseColor = glm::vec3(0.949f, 0.337f, 0.133f);
 
   glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
   glPointSize(5);
@@ -200,10 +204,10 @@ int main(int argc, char **argv)
     TimeManager::Instance().CalculateFrameRate(true);
     deltaTime = TimeManager::Instance().DeltaTime;
 
-    for (int i = 0; i < 64; ++i) {
+    /*for (int i = 0; i < 64; ++i) {
       particleSystem.addParticle();
-    }
-    //particleSystem.addParticle();
+    }*/
+    particleSystem.addParticles((int)(deltaTime * 60 * PARTS_PER_SEC));
     particleSystem.update(deltaTime);
     //cout << "num particles: " << particleSystem.particles.size() << endl;
 

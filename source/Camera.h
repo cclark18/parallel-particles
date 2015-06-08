@@ -54,7 +54,6 @@ class Camera {
     virtual void moveVert(float step);
     virtual void moveHoriz(float step);
 
-  private:
     float theta = 0;
     float phi = 0;
 };

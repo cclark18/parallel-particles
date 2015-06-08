@@ -22,7 +22,7 @@ class ParticleSystem
     size_t numParticles;
     glm::vec3 center;
     glm::vec3 baseColor;
-    void addParticle();
+    void addParticles(int num);
     void addMesh(Mesh *mesh);
     void update(float step);
 

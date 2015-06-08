@@ -25,14 +25,12 @@ ParticleSystem::~ParticleSystem()
 
 void ParticleSystem::update(float step)
 {
-  // add particles
-
   // update time values, discard particles that have aged completely
   auto iter = particles.begin();
   while (iter != particles.end()) {
     iter->age += step;
     if (iter->age > maxAge) {
-      //std::cout << "disposing particle... total: " << particles.size() << std::endl;
+      std::cout << "disposing particle... total: " << particles.size() << std::endl;
       iter = particles.erase(iter);
     }
     else {
@@ -42,22 +40,23 @@ void ParticleSystem::update(float step)
 
   // move particles
   getSOAPositions(&particlePositionsOld);
-  //getSOAMeshes(&meshPositions);
   assert(particlePositionsOld.size == particlePositionsNew.size);
   calculate(particles.size(), particlePositionsOld, meshPositions, particlePositionsNew, false, step);
   setSOAPositions(particlePositionsNew);
 }
 
-void ParticleSystem::addParticle()
+void ParticleSystem::addParticles(int num)
 {
-  Particle particle;
-  particle.age = 0;
-  float x = (rand() % 100 - 50) / 8000.0f;
-  float y = (rand() % 100 - 50) / 8000.0f;
-  float z = (rand() % 100 - 50) / 8000.0f;
-  particle.position = center + glm::vec3(x, y, z);
+  for (int i = 0; i < num; ++i) {
+    Particle particle;
+    particle.age = 0;
+    float x = (rand() % 100 - 50) / 8000.0f;
+    float y = (rand() % 100 - 50) / 8000.0f;
+    float z = (rand() % 100 - 50) / 8000.0f;
+    particle.position = center + glm::vec3(x, y, z);
 
-  particles.push_back(particle);
+    particles.push_back(particle);
+  }
 
   if (particlePositionsOld.size <= particles.size()) {
     int oldSize = particlePositionsOld.size;
@@ -132,25 +131,30 @@ void calculate(size_t numParts,
   float *partPosX = positions.x;
   float *partPosY = positions.y;
   float *partPosZ = positions.z;
-  __assume_aligned(partPosX, 64);
-  __assume_aligned(partPosY, 64);
-  __assume_aligned(partPosZ, 64);
   
   float *meshPosX = meshPoints.x;
   float *meshPosY = meshPoints.y;
   float *meshPosZ = meshPoints.z;
-  __assume_aligned(meshPosX, 64);
-  __assume_aligned(meshPosY, 64);
-  __assume_aligned(meshPosZ, 64);
 
   float *outX = out.x;
   float *outY = out.y;
   float *outZ = out.z;
+
+#ifdef VECTOR
+  __assume_aligned(partPosX, 64);
+  __assume_aligned(partPosY, 64);
+  __assume_aligned(partPosZ, 64);
+  __assume_aligned(meshPosX, 64);
+  __assume_aligned(meshPosY, 64);
+  __assume_aligned(meshPosZ, 64);
   __assume_aligned(outX, 64);
   __assume_aligned(outY, 64);
   __assume_aligned(outZ, 64);
 
+#pragma omp parallel for simd
+#else
 #pragma omp parallel for
+#endif
   for (size_t i = 0; i < numParts; ++i) {
     float dx = 0;
     float dy = 0;
@@ -161,7 +165,7 @@ void calculate(size_t numParts,
       float disty = partPosY[i] - partPosY[j];
       float distz = partPosZ[i] - partPosZ[j];
       float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-      float force = 0.1 * FORCE_CONSTANT / (distTot * distTot * distTot);
+      float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
       dx += distx * force;
       dy += disty * force;
       dz += distz * force;
@@ -180,15 +184,16 @@ void calculate(size_t numParts,
       float disty = partPosY[i] - meshPosY[j];
       float distz = partPosZ[i] - meshPosZ[j];
       float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-      float force = 5.0 * FORCE_CONSTANT / (distTot * distTot * distTot);
-      /*dx += distx * force;
+      float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
+      dx += distx * force;
       dy += disty * force;
-      dz += distz * force;*/
+      dz += distz * force;
 #ifdef DEBUG
       std::cout << "<" << meshPosX[j] << ", " << meshPosY[j] << ", " << meshPosZ[j] << ">" << std::endl;
 #endif
     }
 
+    dy -= 0.01;
     // apply translations
     /*outX[i] = partPosX[i];
     outY[i] = partPosY[i];

@@ -50,7 +50,7 @@ endforeach(SOURCE)
 # use optimization
 SET(CMAKE_CXX_FLAGS "-std=gnu++0x -O3 -ggdb -openmp")
 
-SET(CMAKE_BUILD_TYPE Release)
+SET(CMAKE_BUILD_TYPE Debug)
 
 include_directories(${INCLUDES})
 add_executable(${PROJECT_NAME} ${ABS_SOURCES} ${ABS_HEADERS} ${LIB_SOURCES})
