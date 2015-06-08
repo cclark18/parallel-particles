@@ -109,6 +109,7 @@ void ParticleSystem::addMesh(Mesh *mesh)
 
 void ParticleSystem::getSOAPositions(soa_point_t *result)
 {
+#pragma omp parallel for
   for (int i = 0; i < particles.size(); ++i) {
     result->x[i] = particles[i].position.x;
     result->y[i] = particles[i].position.y;
@@ -118,6 +119,7 @@ void ParticleSystem::getSOAPositions(soa_point_t *result)
 
 void ParticleSystem::setSOAPositions(soa_point_t values)
 {
+#pragma omp parallel for
   for (int i = 0; i < particles.size(); ++i) {
     particles[i].position.x = values.x[i];
     particles[i].position.y = values.y[i];
@@ -229,9 +231,21 @@ void calculate(size_t numParts,
 #endif
       // move away from mesh points
       for (size_t j = 0; j < meshPoints.size; ++j) {
-        float distx = partPosX[i] - meshPosX[j];
-        float disty = partPosY[i] - meshPosY[j];
-        float distz = partPosZ[i] - meshPosZ[j];
+        float meshFinalX = meshTransform[0][0] * meshPosX[j] +
+                           meshTransform[1][0] * meshPosY[j] +
+                           meshTransform[2][0] * meshPosZ[j] +
+                           meshTransform[3][0];
+        float meshFinalY = meshTransform[0][1] * meshPosX[j] +
+                           meshTransform[1][1] * meshPosY[j] +
+                           meshTransform[2][1] * meshPosZ[j] +
+                           meshTransform[3][1];
+        float meshFinalZ = meshTransform[0][2] * meshPosX[j] +
+                           meshTransform[1][2] * meshPosY[j] +
+                           meshTransform[2][2] * meshPosZ[j] +
+                           meshTransform[3][2];
+        float distx = partPosX[i] - meshFinalX;
+        float disty = partPosY[i] - meshFinalY;
+        float distz = partPosZ[i] - meshFinalZ;
         float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
         float force = 20.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
         dx += distx * force;
