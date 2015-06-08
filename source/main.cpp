@@ -194,7 +194,7 @@ int main(int argc, char **argv)
   particleSystem.baseColor = glm::vec3(1.0f, 0.0f, 1.0f);
 
   glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
-  glPointSize(10);
+  glPointSize(5);
 
   do{
     TimeManager::Instance().CalculateFrameRate(true);

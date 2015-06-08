@@ -52,9 +52,9 @@ void ParticleSystem::addParticle()
 {
   Particle particle;
   particle.age = 0;
-  float x = (rand() % 500 - 500) / 8000.0f;
-  float y = (rand() % 500 - 500) / 8000.0f;
-  float z = (rand() % 500 - 500) / 8000.0f;
+  float x = (rand() % 100 - 50) / 8000.0f;
+  float y = (rand() % 100 - 50) / 8000.0f;
+  float z = (rand() % 100 - 50) / 8000.0f;
   particle.position = center + glm::vec3(x, y, z);
 
   particles.push_back(particle);
@@ -150,7 +150,7 @@ void calculate(size_t numParts,
   __assume_aligned(outY, 64);
   __assume_aligned(outZ, 64);
 
-#pragma omp parallel for simd
+#pragma omp parallel for
   for (size_t i = 0; i < numParts; ++i) {
     float dx = 0;
     float dy = 0;
@@ -160,8 +160,8 @@ void calculate(size_t numParts,
       float distx = partPosX[i] - partPosX[j];
       float disty = partPosY[i] - partPosY[j];
       float distz = partPosZ[i] - partPosZ[j];
-      float distTot = distx * distx + disty * disty + distz * distz + 0.000000000001;  // offset to avoid problems dividing by zero
-      float force = 0.1 * FORCE_CONSTANT / distTot;
+      float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
+      float force = 0.1 * FORCE_CONSTANT / (distTot * distTot * distTot);
       dx += distx * force;
       dy += disty * force;
       dz += distz * force;
@@ -179,17 +179,20 @@ void calculate(size_t numParts,
       float distx = partPosX[i] - meshPosX[j];
       float disty = partPosY[i] - meshPosY[j];
       float distz = partPosZ[i] - meshPosZ[j];
-      float distTot = distx * distx + disty * disty + distz * distz + 0.000000000001;  // offset to avoid problems dividing by zero
-      float force = 5.0 * FORCE_CONSTANT / distTot;
-      dx += distx * force;
+      float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
+      float force = 5.0 * FORCE_CONSTANT / (distTot * distTot * distTot);
+      /*dx += distx * force;
       dy += disty * force;
-      dz += distz * force;
+      dz += distz * force;*/
 #ifdef DEBUG
       std::cout << "<" << meshPosX[j] << ", " << meshPosY[j] << ", " << meshPosZ[j] << ">" << std::endl;
 #endif
     }
 
     // apply translations
+    /*outX[i] = partPosX[i];
+    outY[i] = partPosY[i];
+    outZ[i] = partPosZ[i];*/
     outX[i] = partPosX[i] + dx;
     outY[i] = partPosY[i] + dy;
     outZ[i] = partPosZ[i] + dz;
