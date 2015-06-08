@@ -2,8 +2,8 @@
 #define __BUILD_SETTINGS_H
 
 //#define DEBUG
-//#define RENDER
+#define RENDER
 #define VECTOR
-#define OFFLOAD_BUILD
+//#define OFFLOAD_BUILD
 
 #endif

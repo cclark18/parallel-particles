@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 
     end = std::chrono::system_clock::now();
     elapsed_seconds = end-start;
-    cout << "Particle calculation time: " << elapsed_seconds.count() << "s (" << partPositions.size() / 3 << " particles)" << endl;
+    //cout << "Particle calculation time: " << elapsed_seconds.count() << "s (" << partPositions.size() / 3 << " particles)" << endl;
 
 #ifdef RENDER
     //glBindFramebufferEXT(GL_FRAMEBUFFER, 0);

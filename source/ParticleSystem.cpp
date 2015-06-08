@@ -247,7 +247,7 @@ void calculate(size_t numParts,
         float disty = partPosY[i] - meshFinalY;
         float distz = partPosZ[i] - meshFinalZ;
         float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-        float force = 20.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
+        float force = 80.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
         dx += distx * force;
         dy += disty * force;
         dz += distz * force;
