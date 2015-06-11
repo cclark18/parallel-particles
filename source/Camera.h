@@ -3,6 +3,7 @@
 
 /*
  * Basic camera class. Controlled by directly modifying eye, lookat, etc.
+ * Taken from 476 project for use in this project.
  */
 
 #include <stdio.h>

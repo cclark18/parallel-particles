@@ -1,7 +1,8 @@
 #ifndef __SOA_POINT_H
 #define __SOA_POINT_H
 
-//#include <cstdlib>
+// designed to make it a bit easier to pass around SOA
+// data without declaring a ton of float pointers
 
 typedef struct
 {

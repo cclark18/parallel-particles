@@ -2,7 +2,7 @@
 
 Camera::Camera()
 {
-  eye = glm::vec3(-1.6f, 0.4f, 2.5f);
+  eye = glm::vec3(-1.6f, 0.6f, 2.5f);
   theta = 54;
   phi = -9;
   lookat.x = eye.x + cos(phi * M_PI / 180) * cos(theta * M_PI / 180);

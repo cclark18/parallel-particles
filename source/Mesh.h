@@ -9,6 +9,10 @@
 #include "glm/gtc/type_ptr.hpp" //value_ptr
 #include "BuildSettings.h"
 
+/*
+ * Class that contains vertex position, face, normal, etc. data
+ * Taken from 476 project for use in this project.
+ */
 
 class Mesh {
   public:

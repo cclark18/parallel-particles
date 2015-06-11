@@ -1,9 +1,14 @@
 //
 //  PhongHandles.h
+//  
+//  Contains handles for data sent to phong shader,
+//  and handles shader loading and mesh drawing
+//
+//  Modified from 476 project for use in this project
 //
 
-#ifndef __MarchingCubes__PhongHandles
-#define __MarchingCubes__PhongHandles
+#ifndef __PhongHandles
+#define __PhongHandles
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,4 +39,4 @@ class PhongHandles {
     void draw(Mesh* mesh);
 };
 
-#endif /* defined(__MarchingCubes__PhongHandles) */
+#endif

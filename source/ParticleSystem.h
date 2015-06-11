@@ -1,3 +1,9 @@
+// ParticleSystem.h
+//
+// Handles particle generation and motion.
+// All parallelism for this project occurs in this class.
+// Converts particle data to OpenGL-friendly format after calculations.
+
 #ifndef __PARTICLE_SYSTEM_H
 #define __PARTICLE_SYSTEM_H
 #include "SOAPoint.h"
@@ -10,9 +16,7 @@
 #include <vector>
 #include <cassert>
 
-// precalculated constant multiplier for electrostatic charges
-// with a predetermined equal charge
-// pretty much a junk value for testing for now
+// constant multiplier for electrostatic charges
 #define FORCE_CONSTANT 0.000001f
 
 class ParticleSystem

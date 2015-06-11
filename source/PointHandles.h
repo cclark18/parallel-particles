@@ -1,9 +1,14 @@
 //
 //  PointHandles.h
+//  
+//  Contains handles for data sent to point shader,
+//  and handles shader loading and mesh drawing
+//
+//  Modified from 476 project for use in this project
 //
 
-#ifndef __MarchingCubes__PointHandles
-#define __MarchingCubes__PointHandles
+#ifndef __PointHandles
+#define __PointHandles
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,4 +31,4 @@ class PointHandles {
     void draw(std::vector<float> positions, std::vector<float> colors);
 };
 
-#endif /* defined(__MarchingCubes__PointHandles) */
+#endif

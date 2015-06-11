@@ -15,7 +15,7 @@
 #include "glm/gtc/type_ptr.hpp" //value_ptr
 #include <memory>
 
-//#include "Library/TimeManager.h"
+#include "Library/TimeManager.h"
 #include "Library/InitObjects.h"
 #include "Library/tiny_obj_loader.h"
 #include "Library/GLSL.h"
@@ -39,7 +39,6 @@ double deltaTime;
 GLFWwindow* window;
 int g_width = 1280;
 int g_height = 720;
-//vector<tinyobj::shape_t> shapes;
 Camera camera;
 double mouseSpeed = 200.0f;
 float keySpeed = 4.0;
@@ -50,72 +49,13 @@ inline void safe_glUniformMatrix4fv(const GLint handle, const GLfloat data[]) {
     glUniformMatrix4fv(handle, 1, GL_FALSE, data);
 }
 
+// handles window resizing
 void window_size_callback(GLFWwindow* window, int w, int h)
 {
   glViewport(0, 0, (GLsizei)w, (GLsizei)h);
   g_width = w;
   g_height = h;
   camera.aspect = (float)g_width / (float)g_height;
-}
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-  glm::vec3 move(0.0f, 0.0f, 0.0f);
-  if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-    switch (key) {
-    case GLFW_KEY_W:
-    case GLFW_KEY_UP:
-      move = (float)(keySpeed * deltaTime) * camera.getForward();
-      break;
-    case GLFW_KEY_A:
-    case GLFW_KEY_LEFT:
-      move = (float)(-1 * keySpeed * deltaTime) * camera.getStrafe();
-      break;
-    case GLFW_KEY_S:
-    case GLFW_KEY_DOWN:
-      move = (float)(-1 * keySpeed * deltaTime) * camera.getForward();
-      break;
-    case GLFW_KEY_D:
-    case GLFW_KEY_RIGHT:
-      move = (float)(keySpeed * deltaTime) * camera.getStrafe();
-      break;
-    case GLFW_KEY_P:
-      cout << "cam pos: <" << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << ">" << endl;
-      cout << "cam angle: " << camera.theta << ", " << camera.phi << endl;
-    }
-    camera.eye += move;
-    camera.lookat += move;
-  }
-
-  //cout << "eye: <" << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << ">" << endl;
-  //cout << "lookat: <" << camera.lookat.x << ", " << camera.lookat.y << ", " << camera.lookat.z << ">" << endl;
-}
-
-void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos)
-{
-  double x_center = g_width / 2.0;
-  double y_center = g_height / 2.0;
-
-  double dx = xpos - x_center;
-  double dy = ypos - y_center;
-
-  float maxMove = mouseSpeed * deltaTime;
-  if (dx > 0) {
-    dx = dx < maxMove ? dx : maxMove;
-  }
-  else {
-    dx = dx > -1.0 * maxMove ? dx : -1.0 * maxMove;
-  }
-  if (dy > 0) {
-    dy = dy < maxMove ? dy : maxMove;
-  }
-  else {
-    dy = dy > -1.0 * maxMove ? dy : -1.0 * maxMove;
-  }
-  camera.moveHoriz(-1.0 * dx * 0.01);
-  camera.moveVert(dy * 0.01);
-
-  glfwSetCursorPos(window, x_center, y_center);
 }
 
 void initGL()
@@ -166,14 +106,12 @@ int main(int argc, char **argv)
   }
 
   glfwMakeContextCurrent(window);
-  glfwSetKeyCallback(window, key_callback);
-  glfwSetCursorPosCallback(window, cursor_pos_callback);
   glfwSetWindowSizeCallback(window, window_size_callback);
   // Initialize GLAD
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   glfwSetCursorPos(window, g_width / 2, g_height / 2);
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
   // Ensure we can capture the escape key being pressed below
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -183,9 +121,11 @@ int main(int argc, char **argv)
   initGL();
   assert(glGetError() == GL_NO_ERROR);
 
+  // set back color and point size
   glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
   glPointSize(5);
 
+  // load shaders
   PhongHandles phongHandles;
   phongHandles.installShaders("../resources/shaders/phongVert.glsl", "../resources/shaders/phongFrag.glsl");
 
@@ -193,18 +133,21 @@ int main(int argc, char **argv)
   pointHandles.installShaders("../resources/shaders/pointVert.glsl", "../resources/shaders/pointFrag.glsl");
 #endif
 
+  // load mesh from .obj file
   Mesh obj1;
   obj1.loadShapes("../resources/models/bunny.obj");
 
+  // initialize particle system
   ParticleSystem particleSystem;
   particleSystem.addMesh(&obj1);
-  //particleSystem.center = glm::vec3(0.0f, 0.0f, 0.0f);
   particleSystem.center = glm::vec3(0.0f, 1.0f, 0.0f);
   particleSystem.baseColor = glm::vec3(0.949f, 0.337f, 0.133f);
 
+  // setup for mesh animation
   glm::vec3 objCenter = glm::vec3(0.0f, 0.0f, 0.0f);
   bool moveRight = true;
 
+  // read command line arguments (if present) to set particle spawn rate and lifetime
   int partsPerSec = PARTS_PER_SEC_DEFAULT;
   if (argc > 1) {
     partsPerSec = atoi(argv[1]);
@@ -214,13 +157,10 @@ int main(int argc, char **argv)
   }
 
 
-
   std::chrono::time_point<std::chrono::system_clock> last, cur, start, end;
   cur = std::chrono::system_clock::now();
 
   do{
-    //TimeManager::Instance().CalculateFrameRate(true);
-    //deltaTime = TimeManager::Instance().DeltaTime;
     last = cur;
     cur = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = cur-last;
@@ -242,12 +182,9 @@ int main(int argc, char **argv)
     objCenter.y = 0.6 * abs(sin(objCenter.x * 3));
     glm::mat4 translate = glm::translate(glm::mat4(1.0f), objCenter);
     
-#ifdef DEBUG
-    cout << "Frame delta time: " << elapsed_seconds.count() << endl;
-#endif
-
     start = std::chrono::system_clock::now();
 
+    // run particle system
     particleSystem.addParticles((int)(deltaTime * 60.0 * partsPerSec));
     particleSystem.update(deltaTime, translate);
 
@@ -256,17 +193,13 @@ int main(int argc, char **argv)
 
     end = std::chrono::system_clock::now();
     elapsed_seconds = end-start;
-#ifndef RENDER
     cout << "Particle calculation time: " << elapsed_seconds.count() << "s (" << partPositions.size() / 3 << " particles)" << endl;
-#endif
 
 #ifdef RENDER
-    //glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
+    // render mesh w/ phong lighting
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDrawBuffer(GL_BACK);
-    //glCullFace(GL_FRONT);
-    //glDrawBuffer(GL_NONE);
     glCullFace(GL_BACK);
     glUseProgram(phongHandles.prog);
     setPhongMaterial(&phongHandles, FLAT_GRAY);
@@ -278,12 +211,13 @@ int main(int argc, char **argv)
     safe_glUniformMatrix4fv(phongHandles.uProjMatrix, glm::value_ptr(camera.getProjection()));
     phongHandles.draw(&obj1);
 
+    // render particles from particle system
     glUseProgram(pointHandles.prog);
     safe_glUniformMatrix4fv(pointHandles.uViewMatrix, glm::value_ptr(camera.getView()));
     safe_glUniformMatrix4fv(pointHandles.uProjMatrix, glm::value_ptr(camera.getProjection()));
     pointHandles.draw(partPositions, partColors);
-    //cout << "num drawn: " << particleSystem.getPositions().size() / 3 << endl;
 
+    // end of frame housekeeping
     glUseProgram(0);
     glfwSwapBuffers(window);
     glfwPollEvents();

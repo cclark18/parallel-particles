@@ -22,4 +22,5 @@ set(SOURCES
    Library/tiny_obj_loader.cc
    Library/InitObjects.cpp
    Library/GLError.cpp
+   Library/TimeManager.cpp
 )

@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Basic structure for particle properties
+
 typedef struct
 {
   float age;

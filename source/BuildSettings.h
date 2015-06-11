@@ -1,8 +1,9 @@
 #ifndef __BUILD_SETTINGS_H
 #define __BUILD_SETTINGS_H
 
-//#define DEBUG
-//#define RENDER
+// defines in here are used to compile different versions of the executable
+
+#define RENDER
 #define VECTOR
 #define PARALLEL
 #define OFFLOAD_BUILD

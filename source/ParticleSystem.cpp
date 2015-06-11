@@ -28,19 +28,10 @@ void ParticleSystem::update(float step, glm::mat4 meshTransform)
 {
   // update time values, discard particles that have aged completely
   auto iter = particles.begin();
-#ifdef DEBUG
-  std::cout << "aging particles... total: " << particles.size() << std::endl;
-#endif
   while (iter != particles.end()) {
     iter->age += step;
     if (iter->age > maxAge) {
-#ifdef DEBUG
-      std::cout << "disposing particle... total: " << particles.size() << std::endl;
-#endif
       iter = particles.erase(iter);
-#ifdef DEBUG
-      std::cout << "disposed particle... total: " << particles.size() << std::endl;
-#endif
     }
     else {
       ++iter;
@@ -63,9 +54,6 @@ void ParticleSystem::update(float step, glm::mat4 meshTransform)
 
 void ParticleSystem::addParticles(int num)
 {
-#ifdef DEBUG
-  std::cout << "adding " << num << " particles..." << std::endl;
-#endif
   for (int i = 0; i < num; ++i) {
     Particle particle;
     particle.age = 0;
@@ -77,10 +65,7 @@ void ParticleSystem::addParticles(int num)
     particles.push_back(particle);
   }
 
-  if (particlePositionsOld.size <= particles.size()) {
-#ifdef DEBUG
-    std::cout << "resizing particle structures" << std::endl;
-#endif
+  while (particlePositionsOld.size <= particles.size()) {
     int oldSize = particlePositionsOld.size;
     free_soa(&particlePositionsOld);
     allocate_soa(&particlePositionsOld, oldSize + partIncr);
@@ -102,9 +87,6 @@ void ParticleSystem::addMesh(Mesh *mesh)
   }
 
   allocate_soa(&meshPositions, size);
-#ifdef DEBUG
-  std::cout << size << std::endl;
-#endif
   getSOAMeshes(&meshPositions);
 }
 
@@ -160,7 +142,7 @@ void ParticleSystem::getSOAMeshes(soa_point_t *result)
 
 }
 
-// this is where the magic (parallelism) happens
+// parallelism happens here
 void calculate(size_t numParts,
                soa_point_t positions,
                soa_point_t meshPoints,
@@ -225,16 +207,12 @@ void calculate(size_t numParts,
         float disty = partPosY[i] - partPosY[j];
         float distz = partPosZ[i] - partPosZ[j];
         float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-        float force = 1.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
+        float force = 2.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
         dx += distx * force;
         dy += disty * force;
         dz += distz * force;
       }
 
-#ifdef DEBUG
-      //std::cout << "----- MESH POSITIONS -----" << std::endl;
-      //std::cout << meshPoints.size << std::endl;
-#endif
       // move away from mesh points
       for (size_t j = 0; j < meshPoints.size; ++j) {
         float meshFinalX = meshTransform[0][0] * meshPosX[j] +
@@ -253,20 +231,15 @@ void calculate(size_t numParts,
         float disty = partPosY[i] - meshFinalY;
         float distz = partPosZ[i] - meshFinalZ;
         float distTot = sqrt(distx * distx + disty * disty + distz * distz + 0.000000000001);  // offset to avoid problems dividing by zero
-        float force = 80.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
+        float force = 90.0 * step * FORCE_CONSTANT / (distTot * distTot * distTot);
         dx += distx * force;
         dy += disty * force;
         dz += distz * force;
-#ifdef DEBUG
-        //std::cout << "<" << meshPosX[j] << ", " << meshPosY[j] << ", " << meshPosZ[j] << ">" << std::endl;
-#endif
       }
 
-      dy -= 0.002;
+      // small "gravity" on particles
+      dy -= 0.003;
       // apply translations
-      /*outX[i] = partPosX[i];
-        outY[i] = partPosY[i];
-        outZ[i] = partPosZ[i];*/
       outX[i] = partPosX[i] + dx;
       outY[i] = partPosY[i] + dy;
       outZ[i] = partPosZ[i] + dz;
@@ -308,13 +281,10 @@ std::vector<float> ParticleSystem::getColors()
 void allocate_soa(soa_point_t *point, size_t size)
 {
   point->size = size;
-  //point->x = (float *)(malloc(sizeof(float)*size));
   point->x = reinterpret_cast<float *>(_mm_malloc(sizeof(float)*size, 64));
   assert (point->x != NULL);
-  //point->y = (float *)(malloc(sizeof(float)*size));
   point->y = reinterpret_cast<float *>(_mm_malloc(sizeof(float)*size, 64));
   assert (point->y != NULL);
-  //point->z = (float *)(malloc(sizeof(float)*size));
   point->z = reinterpret_cast<float *>(_mm_malloc(sizeof(float)*size, 64));
   assert (point->z != NULL);
 }
